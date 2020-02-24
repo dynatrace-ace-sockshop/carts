@@ -189,7 +189,7 @@ pipeline {
           parameters: [
             string(name: 'APP_NAME', value: "${env.APP_NAME}"),
             string(name: 'TAG_STAGING', value: "${env.TAG_STAGING}"),
-            string(name: 'VERSION', value: "${env.VERSION}")
+            string(name: 'VERSION', value: "${env.VERSION}"),
             string(name: 'DT_CUSTOM_PROP', value: "${env.DT_META}")
           ]
       }
