@@ -92,6 +92,25 @@ pipeline {
         }
       }
     }
+    stage('DT Create Synthetic') {
+      when {
+          expression {
+          return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
+          }
+      }
+      steps {
+        container("curl") {
+          script {
+            def status = dt_createSyntheticTest (
+              testName : 'sockshop.staging.carts',
+              url : 'http://34.68.41.104/',
+              method : 'GET',
+              location : 'SYNTHETIC_LOCATION-0AFE17436CCCBA9C'
+            )
+          }
+        }
+      }
+    }
     stage('Run health check in dev') {
       when {
         expression {
