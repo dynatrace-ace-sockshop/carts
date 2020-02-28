@@ -178,7 +178,7 @@ pipeline {
               testName : 'sockshop.dev.carts',
               url : 'http://34.68.41.104/items',
               method : 'GET',
-              location : 'SYNTHETIC_LOCATION-0AFE17436CCCBA9C'
+              location : "${DT_SYNTHETIC_LOCATION_ID}"
             )
           }
         }
