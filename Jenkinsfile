@@ -172,7 +172,7 @@ pipeline {
           }
       }
       steps {
-        container("ubectl"){
+        container("kubectl"){
           script{
             env.CARTS_IP = "${sh(script:'kubectl get svc carts -n dev -o jsonpath=\'{.status.loadBalancer.ingress[0].ip}\'', returnStdout: true)}"
           }
