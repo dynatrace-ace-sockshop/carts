@@ -172,11 +172,16 @@ pipeline {
           }
       }
       steps {
+        container("ubectl"){
+          script{
+            env.CARTS_IP = "${sh(script:'kubectl get svc carts -n dev -o jsonpath=\'{.status.loadBalancer.ingress[0].ip}\'', returnStdout: true)}"
+          }
+        }
         container("curl") {
           script {
             def status = dt_createUpdateSyntheticTest (
               testName : 'sockshop.dev.carts',
-              url : 'http://34.68.41.104/items',
+              url : "http://${env.CARTS_IP}/items",
               method : 'GET',
               location : "${DT_SYNTHETIC_LOCATION_ID}"
             )
