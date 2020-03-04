@@ -174,7 +174,7 @@ pipeline {
       steps {
         container("curl") {
           script {
-            def status = dt_createSyntheticTest (
+            def status = dt_createUpdateSyntheticTest (
               testName : 'sockshop.dev.carts',
               url : 'http://34.68.41.104/items',
               method : 'GET',
