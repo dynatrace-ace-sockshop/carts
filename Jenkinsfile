@@ -12,6 +12,75 @@ def tagMatchRules = [
   ]
 ]
 
+def dashboardTileRules = [
+    [
+        name : 'Service health', tileType : 'SERVICES', configured : true, filterConfig: null, chartVisible: true,
+        bounds : [ top: 38, left : 0, width: 304, height: 304 ],
+        tileFilter : [ timeframe : null, managementZone : null ]
+            
+    ],
+    [
+        name : 'Custom chart', tileType : 'CUSTOM_CHARTING', configured : true, chartVisible: true,
+        bounds : [ top: 38, left : 342, width: 494, height: 304 ],
+        tileFilter : [ timeframe : null, managementZone : null ],
+        filterConfig : [ type : 'MIXED', customName: 'Response time', defaultName: 'Custom chart', 
+            chartConfig : [
+                legendShown : true, type : 'TIMESERIES', resultMetadata : [:],
+                series : [
+                    [ metric: 'builtin:service.response.time', aggregation: 'AVG', percentile: null, type : 'BAR', entityType : 'SERVICE', dimensions : [], sortAscending : false, sortColumn : true, aggregationRate : 'TOTAL' ]
+                ],
+            ],
+        filtersPerEntityType: [:]
+        ]
+    ],
+    [
+        name : 'Custom chart', tileType : 'CUSTOM_CHARTING', configured : true, chartVisible: true,
+        bounds : [ top: 38, left : 874, width: 494, height: 304 ],
+        tileFilter : [ timeframe : null, managementZone : null ],
+        filterConfig : [ type : 'MIXED', customName: 'Failure rate (any  errors)', defaultName: 'Custom chart', 
+            chartConfig : [
+                legendShown : true, type : 'TIMESERIES', resultMetadata : [:],
+                series : [
+                    [ metric: 'builtin:service.errors.total.rate', aggregation: 'AVG', percentile: null, type : 'BAR', entityType : 'SERVICE', dimensions : [], sortAscending : false, sortColumn : true, aggregationRate : 'TOTAL' ]
+                ],
+            ],
+        filtersPerEntityType: [:]
+        ]
+    ]
+]
+
+def mzContitions = [
+    [
+        key: [
+            attribute: 'SERVICE_TAGS'
+        ],
+        comparisonInfo: [
+            type: 'TAG',
+            operator: 'EQUALS',
+            value: [
+                context: 'ENVIRONMENT',
+                key: 'product',
+                value: 'sockshop'
+            ],
+            negate: false
+        ]
+    ],
+    [
+        key: [
+            attribute: 'PROCESS_GROUP_PREDEFINED_METADATA',
+            dynamicKey: 'KUBERNETES_NAMESPACE',
+            type: 'PROCESS_PREDEFINED_METADATA_KEY'
+        ],
+        comparisonInfo: [
+            type: 'STRING',
+            operator: 'EQUALS',
+            value: 'dev',
+            negate: false,
+            caseSensitive: false
+        ]
+    ]
+]
+
 pipeline {
   agent {
     label 'maven'
@@ -74,7 +143,7 @@ pipeline {
         }
       }
     }
-    stage('DT Deploy Event') {
+    stage('DT send deploy event') {
       when {
           expression {
           return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
@@ -166,30 +235,92 @@ pipeline {
         }
       }
     }
-    stage('DT Create Synthetic') {
+    stage('DT create synthetic monitor') {
       when {
           expression {
           return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
           }
       }
       steps {
-        container("kubectl"){
-          script{
-            env.CARTS_IP = "${sh(script:'kubectl get svc carts -n dev -o jsonpath=\'{.status.loadBalancer.ingress[0].ip}\'', returnStdout: true)}"
+        container("kubectl") {
+          script {
+            // Get IP of service
+            env.SERVICE_IP = sh(script: 'kubectl get svc ${APP_NAME} -n dev -o \'jsonpath={..status.loadBalancer.ingress..ip}\'', , returnStdout: true).trim()
           }
         }
         container("curl") {
           script {
             def status = dt_createUpdateSyntheticTest (
-              testName : 'sockshop.dev.carts',
-              url : "http://${env.CARTS_IP}/items",
-              method : 'GET',
-              location : "${DT_SYNTHETIC_LOCATION_ID}"
+              testName : "sockshop.dev.${env.APP_NAME}",
+              url : "http://${SERVICE_IP}/items",
+              method : "GET",
+              location : "${env.DT_SYNTHETIC_LOCATION_ID}"
             )
           }
         }
       }
     }
+    stage('DT create application detection rule') {
+      when {
+          expression {
+          return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
+          }
+      }
+      steps {
+          container("curl") {
+          script {
+            def status = dt_createUpdateAppDetectionRule (
+              dtAppName : "sockshop.dev.${env.APP_NAME}",
+              pattern : "http://${SERVICE_IP}",
+              applicationMatchType: "CONTAINS",
+              applicationMatchTarget: "URL"
+            )
+          }
+        }
+      }
+    }
+    stage('DT create management zone') {
+      when {
+          expression {
+          return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
+          }
+      }
+      steps {
+        container("curl") {
+          script {
+            def (int status, String dt_mngtZoneId) = dt_createUpdateManagementZone (
+                managementZoneName : 'Sockshop dev',
+                ruleType : 'SERVICE',
+                managementZoneConditions : mzContitions,
+            )
+            DT_MGMTZONEID = dt_mngtZoneId
+          }
+        }
+      }
+    }
+    stage('DT create dashboard') {
+      when {
+          expression {
+          return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
+          }
+      }
+      steps {
+        container("curl") {
+          script {
+            def status = dt_createUpdateDashboard (
+              dashboardName : 'sockshop-dev',
+              dashboardManagementZoneName : 'sockshop-dev',
+              dashboardManagementZoneId : "${DT_MGMTZONEID}",
+              dashboardShared : false,
+              dashboardLinkShared : true,
+              dashboardPublished : false,
+              dashboardTimeframe : '-30m',
+              dtDashboardTiles : dashboardTileRules
+            )
+          }
+        }
+     }
+   }
     stage('Mark artifact for staging namespace') {
       when {
         expression {
