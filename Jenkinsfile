@@ -51,33 +51,15 @@ def dashboardTileRules = [
 
 def mzContitions = [
     [
-        key: [
-            attribute: 'SERVICE_TAGS'
-        ],
-        comparisonInfo: [
-            type: 'TAG',
-            operator: 'EQUALS',
-            value: [
-                context: 'ENVIRONMENT',
-                key: 'product',
-                value: 'sockshop'
-            ],
+        key: [ attribute: 'SERVICE_TAGS' ],
+        comparisonInfo: [ type: 'TAG', operator: 'EQUALS',
+            value: [ context: 'ENVIRONMENT', key: 'product', value: 'sockshop' ],
             negate: false
         ]
     ],
     [
-        key: [
-            attribute: 'PROCESS_GROUP_PREDEFINED_METADATA',
-            dynamicKey: 'KUBERNETES_NAMESPACE',
-            type: 'PROCESS_PREDEFINED_METADATA_KEY'
-        ],
-        comparisonInfo: [
-            type: 'STRING',
-            operator: 'EQUALS',
-            value: 'dev',
-            negate: false,
-            caseSensitive: false
-        ]
+        key: [ attribute: 'PROCESS_GROUP_PREDEFINED_METADATA', dynamicKey: 'KUBERNETES_NAMESPACE', type: 'PROCESS_PREDEFINED_METADATA_KEY' ],
+        comparisonInfo: [ type: 'STRING', operator: 'EQUALS', value: 'dev', negate: false, caseSensitive: false ]
     ]
 ]
 
