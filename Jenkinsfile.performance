@@ -1,4 +1,6 @@
 @Library('dynatrace@master') _
+import groovy.json.JsonSlurper
+import groovy.json.JsonSlurperClassic
 
 def tagMatchRules = [
   [
@@ -18,6 +20,9 @@ pipeline {
   }
   environment {
     APP_NAME = "carts"
+    KEPTN_PROJECT = "sockshop-qg"
+    KEPTN_SERVICE = "carts"
+    KEPTN_STAGE = "staging"
   }
   stages {
     stage('Warm up') {
@@ -29,7 +34,7 @@ pipeline {
             def status = executeJMeter ( 
               scriptName: "jmeter/${env.APP_NAME}_perfcheck.jmx",
               resultsDir: "PerfCheck_Warmup_${env.APP_NAME}_${env.VERSION}_${BUILD_NUMBER}",
-              serverUrl: "${env.APP_NAME}.dev", 
+              serverUrl: "${env.APP_NAME}.staging", 
               serverPort: 80,
               checkPath: '/health',
               vuCount: 1,
@@ -52,18 +57,14 @@ pipeline {
 
     stage('Performance Check') {
       steps {
-        recordDynatraceSession(
-          envId: 'Dynatrace Tenant',
-          testCase: 'loadtest',
-          tagMatchRules: tagMatchRules
-        ) 
-        {
-          container('jmeter') {
-            script {
+        env.testStartTime = get_timestamp()
+        container('jmeter') {
+          script {
+              
               def status = executeJMeter ( 
                 scriptName: "jmeter/${env.APP_NAME}_perfcheck.jmx",
                 resultsDir: "PerfCheck_${env.APP_NAME}_${env.VERSION}_${BUILD_NUMBER}",
-                serverUrl: "${env.APP_NAME}.dev", 
+                serverUrl: "${env.APP_NAME}.staging", 
                 serverPort: 80,
                 checkPath: '/health',
                 vuCount: 5,
@@ -76,19 +77,112 @@ pipeline {
                 currentBuild.result = 'FAILED'
                 error "Performance check failed."
               }
-            }
-          }
+           }
         }
+        env.testEndTime = get_timestamp()
+        
 
         echo "Waiting for a minute so data can be processed in Dynatrace"
         sleep(60)
-
-        perfSigDynatraceReports(
-          envId: 'Dynatrace Tenant', 
-          nonFunctionalFailure: 1, 
-          specFile: "monspec/${env.APP_NAME}_perfsig.json"
-        ) 
       }
     }
   }
+  stage('Evaluate Build with Keptn') {
+           steps{
+               script {
+                    println  "About to execute keptn evaluation"
+                    //Get the start time of the test
+                    def startTime = get_timestamp()
+                    def endTime = get_timestamp()
+                    
+                    //Define the Keptn Json payload for the evaluation request post
+                    def keptn_json = """
+                    {
+                     "type": "sh.keptn.event.start-evaluation",
+                     "source": "Jenkins",
+                     "data": {
+                        
+                       "start": "${env.testStartTime}Z",
+                        "end": "${env.testEndTime}Z",
+                        "project": "${env.KEPTN_PROJECT}",
+                        "stage": "${env.KEPTN_STAGE}",
+                        "service": "${env.KEPTN_SERVICE}",
+                        "teststrategy": "manual"
+                      }
+                      }
+                     """
+                    // "labels": {"environment": "yourenv","yourney": "youryourney"}
+
+                    //Post the start-evaluation event to Keptn API
+                    def kept_context_request = httpRequest contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'x-token', value: "${env.KEPTN_API_TOKEN}"]], httpMode: 'POST', requestBody: keptn_json, responseHandle: 'STRING', url: "${env.KEPTN_URL}/v1/event", validResponseCodes: "100:404"
+                    
+                    //Parse response String 
+                    con_response = new JsonSlurperClassic().parseText( kept_context_request.getContent() )
+
+                    //con_response = new JsonSlurper().parseText( kept_context_request.getContent() )
+                    // Get the keptnContext Key
+                    //keptn_context_key = con_response.get("keptnContext")
+                    keptn_context_key = con_response.keptnContext;
+                    // URL Encode the context key
+                    encoded_context = URLEncoder.encode(keptn_context_key.toString().trim(), "UTF-8")
+                    
+                    //Create variable for The keptn Status Request
+                    def kept_status_request
+                    
+                    //Query the Keptn API every 20 Seconds to ge the evaluation Done Event.
+                    timeout(time: 3, unit: 'MINUTES') {
+                        script {
+                            waitUntil {
+                                
+                                // Post the Keptn Context to the Keptn api to get the Evaluation-done event
+                                kept_status_request = httpRequest acceptType: 'APPLICATION_JSON', contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'x-token', value: "${env.KEPTN_API_TOKEN}"]], httpMode: 'GET', responseHandle: 'STRING', url: "${env.KEPTN_URL}/v1/event?keptnContext=${encoded_context}&type=sh.keptn.events.evaluation-done", validResponseCodes: "100:500"
+                                //The API returns a response code 500 error if the evalution done event does not exisit
+                                if (kept_status_request.getStatus() == 500 || kept_status_request.getContent().toString().contains("No Keptn sh.keptn.events.evaluation-done event found for context") ) {
+                                    sleep 10
+                                    return false
+                                } else {
+                                    return true
+                                } 
+                            }
+                        }
+                    }
+                    println(kept_status_request.getContent())
+                    //Parse response String
+                    @NonCPS
+                    responseData = new JsonSlurper().parseText( kept_status_request.getContent() )
+                    
+                    keptn_result = responseData.data.result
+                    resultText = generateResult(responseData.data);
+                    
+                    env.evaluationDetails = resultText;
+                    env.evaluationResult = keptn_result;
+                    env.evaluationScore = responseData.data.evaluationdetails.score;
+                    println(resultText);
+               }
+           }
+        }
+} // end pipeline
+def get_timestamp(){
+    DATE_TAG = java.time.LocalDate.now()
+    DATETIME_TAG = java.time.LocalDateTime.now()
+    echo "${DATETIME_TAG}"
+                
+    return DATETIME_TAG
+}
+
+def generateResult(data) {
+    def result = "Build result: " + data.result + "\n";
+    result += "Build score: " + data.evaluationdetails.score + "\n";
+    result += "Metrics overview: \n"
+    for(def indicator: data.evaluationdetails.indicatorResults) {
+        result += indicator.value.metric + ": \n"
+        result += "  target: \n"
+        for(def target: indicator.targets) {
+            result += "    - " + target.criteria + "\n"
+        }
+        result += "  value: " + indicator.value.value + "\n"
+        result += "  score: " + indicator.score + "\n"
+    }
+
+    return result;
 }
