@@ -12,7 +12,7 @@ pipeline {
     KEPTN_SERVICE = "carts"
     KEPTN_STAGE = "hardening"
     JMETER_VUCOUNT = 2
-    JMETER_LOOPCOUNT = 5000
+    JMETER_LOOPCOUNT = 2000
   }
   stages {
     stage('Warm up') {
