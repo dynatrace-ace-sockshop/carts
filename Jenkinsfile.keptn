@@ -11,6 +11,8 @@ pipeline {
     KEPTN_PROJECT = "sockshop-qg"
     KEPTN_SERVICE = "carts"
     KEPTN_STAGE = "hardening"
+    JMETER_VUCOUNT = 2
+    JMETER_LOOPCOUNT = 5000
   }
   stages {
     stage('Warm up') {
@@ -57,7 +59,7 @@ pipeline {
                     def customProps = [ 
                         "Test Type": "Load",
                         "Test Provider": "Jmeter",
-                        "Test Parameters": "[vuCount: 5] [loopCount: 2000]"
+                        "Test Parameters": "[vuCount: ${env.JMETER_VUCOUNT}] [loopCount: ${env.JMETER_LOOPCOUNT}]"
                     ];
                     
                     def notification = new pushDynatraceInfoEvent();
@@ -82,8 +84,8 @@ pipeline {
                 serverUrl: "${env.APP_NAME}.staging", 
                 serverPort: 80,
                 checkPath: '/health',
-                vuCount: 5,
-                loopCount: 2000,
+                vuCount: ${env.JMETER_VUCOUNT},
+                loopCount: ${env.JMETER_LOOPCOUNT},
                 LTN: "PerfCheck_${BUILD_NUMBER}",
                 funcValidation: false,
                 avgRtValidation: 4000
@@ -117,7 +119,7 @@ pipeline {
                     def customProps = [ 
                         "Test Type": "Load",
                         "Test Provider": "Jmeter",
-                        "Test Parameters": "[vuCount: 5] [loopCount: 2000]"
+                        "Test Parameters": "[vuCount: ${env.JMETER_VUCOUNT}] [loopCount: ${env.JMETER_LOOPCOUNT}]"
                     ];
                     
                     def notification = new pushDynatraceInfoEvent();
