@@ -11,8 +11,8 @@ pipeline {
     KEPTN_PROJECT = "sockshop-qg"
     KEPTN_SERVICE = "carts"
     KEPTN_STAGE = "hardening"
-    JMETER_VUCOUNT = 2
-    JMETER_LOOPCOUNT = 2000
+    JMETER_VUCOUNT = 1
+    JMETER_LOOPCOUNT = 4000
   }
   stages {
     stage('Warm up') {
