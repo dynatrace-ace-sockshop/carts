@@ -57,7 +57,9 @@ pipeline {
 
     stage('Performance Check') {
       steps {
-        sh 'env.testStartTime = get_timestamp()'
+        script {
+            env.testStartTime = get_timestamp()
+        }
         container('jmeter') {
           script {
               
@@ -79,8 +81,9 @@ pipeline {
               }
             }
         }
-        sh 'env.testEndTime = get_timestamp()'
-        
+        script {
+            env.testEndTime = get_timestamp()
+        }
 
         echo "Waiting for a minute so data can be processed in Dynatrace"
         sleep(60)
