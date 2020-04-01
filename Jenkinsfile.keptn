@@ -4,7 +4,7 @@ import groovy.json.JsonSlurperClassic
 
 pipeline {
   agent {
-    label 'git'
+    label 'kubegit'
   }
   environment {
     APP_NAME = "carts"
