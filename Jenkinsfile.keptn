@@ -116,6 +116,7 @@ pipeline {
                 // Get the keptnContext Key
                 //keptn_context_key = con_response.get("keptnContext")
                 keptn_context_key = con_response.keptnContext;
+                env.keptn_context = keptn_context_key;
                 // URL Encode the context key
                 encoded_context = URLEncoder.encode(keptn_context_key.toString().trim(), "UTF-8")
                 
@@ -150,6 +151,7 @@ pipeline {
                 env.evaluationDetails = resultText;
                 env.evaluationResult = keptn_result;
                 env.evaluationScore = responseData.data.evaluationdetails.score;
+                env.keptn_evaluationContext = responseData.id;
                 println(resultText);
                }
            }
@@ -165,7 +167,13 @@ pipeline {
                                                       [context: 'CONTEXTLESS', key: 'keptn_stage', value: KEPTN_STAGE]]
                                         ]];
                     // Push some Jenkins OOTB info to DT.
-                    def customProps = [ "Evaluation Result": "${env.evaluationResult}", "Evaluation Score": "${env.evaluationScore}", "Jenkins Build Tag": "${BUILD_TAG}", "Jenkins Build URL": "${BUILD_URL}" ];
+                    def customProps = [ 
+                        "Evaluation Result": "${env.evaluationResult}", 
+                        "Evaluation Score": "${env.evaluationScore}", 
+                        "Jenkins Build Tag": "${BUILD_TAG}", 
+                        "Jenkins Build URL": "${BUILD_URL}",
+                        "Evaluation Details: "${env.KEPTN_BRIDGE}/project/${env.KEPTN_PROJECT}/${env.KEPTN_SERVICE}/${env.keptn_context}/${env.keptn_evaluationContext}"
+                    ];
                     
                     def notification = new pushDynatraceInfoEvent();
                     notification.call(title: "Keptn Quality Gates Evaluation: ${env.evaluationResult}", source: 'Jenkins', description: 'Evaluated build score for this build.', tagRule: tagMatchRules, customProperties: customProps);
