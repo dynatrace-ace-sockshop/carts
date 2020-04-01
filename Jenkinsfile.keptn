@@ -17,7 +17,7 @@ pipeline {
       steps {
         checkout scm
 
-        /*container('jmeter') {
+        container('jmeter') {
           script {
             def status = executeJMeter ( 
               scriptName: "jmeter/${env.APP_NAME}_perfcheck.jmx",
@@ -39,7 +39,7 @@ pipeline {
         }
         
         echo "Waiting for a minute to not skew data in DT"
-        sleep(60)*/
+        sleep(60)
       }
     }
     
