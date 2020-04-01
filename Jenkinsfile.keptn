@@ -240,7 +240,7 @@ pipeline {
                     echo env.evaluationResult
                     if (env.evaluationResult == "fail") {
                         echo "[pipeline] FAILING PIPELINE Because Keptn Failed the Build";
-                        currentBuild.currentResult = 'FAILURE';
+                        //currentBuild.currentResult = 'FAILURE';
                         error('Failing pipeline because keptn failed the build...');
                     }
                 }
