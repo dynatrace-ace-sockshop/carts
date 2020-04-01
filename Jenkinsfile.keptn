@@ -158,7 +158,7 @@ pipeline {
         }
         stage('Send Notification to DT') {
             steps {
-          
+              container("curl") {
                 script {
             
                     def tagMatchRules = [[ meTypes: [[meType: 'SERVICE']],
@@ -178,7 +178,8 @@ pipeline {
                     def notification = new pushDynatraceInfoEvent();
                     notification.call(title: "Keptn Quality Gates Evaluation: ${env.evaluationResult}", source: 'Jenkins', description: 'Evaluated build score for this build.', tagRule: tagMatchRules, customProperties: customProps);
                 }
-            }
+             }
+          }
         
         } // end stage
         stage('Evaluate Pipeline') {
