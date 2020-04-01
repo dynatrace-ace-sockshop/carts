@@ -95,8 +95,8 @@ pipeline {
             script {
                 println  "About to execute keptn evaluation"
                 //Get the start time of the test
-                def startTime = get_timestamp()
-                def endTime = get_timestamp()
+                //def startTime = get_timestamp()
+                //def endTime = get_timestamp()
                 
                 //Define the Keptn Json payload for the evaluation request post
                 def keptn_json = """
@@ -114,6 +114,8 @@ pipeline {
                   }
                   }
                  """
+                println("About to evaluate the following: ");
+                println(keptn_json);
                 // "labels": {"environment": "yourenv","yourney": "youryourney"}
 
                 //Post the start-evaluation event to Keptn API
