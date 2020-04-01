@@ -22,7 +22,7 @@ pipeline {
     APP_NAME = "carts"
     KEPTN_PROJECT = "sockshop-qg"
     KEPTN_SERVICE = "carts"
-    KEPTN_STAGE = "staging"
+    KEPTN_STAGE = "hardening"
   }
   stages {
     stage('Warm up') {
