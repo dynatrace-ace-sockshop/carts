@@ -172,7 +172,7 @@ pipeline {
                         "Evaluation Score": "${env.evaluationScore}", 
                         "Jenkins Build Tag": "${BUILD_TAG}", 
                         "Jenkins Build URL": "${BUILD_URL}",
-                        "Evaluation Details: "${env.KEPTN_BRIDGE}/project/${env.KEPTN_PROJECT}/${env.KEPTN_SERVICE}/${env.keptn_context}/${env.keptn_evaluationContext}"
+                        "Evaluation Details": "${env.KEPTN_BRIDGE}/project/${env.KEPTN_PROJECT}/${env.KEPTN_SERVICE}/${env.keptn_context}/${env.keptn_evaluationContext}"
                     ];
                     
                     def notification = new pushDynatraceInfoEvent();
