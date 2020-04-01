@@ -232,7 +232,7 @@ pipeline {
           }
         
         } // end stage
-        stage('Evaluate Pipeline') {
+        stage('Pipeline Quality Gate') {
             steps {
           
                 script {
