@@ -25,11 +25,11 @@ pipeline {
     KEPTN_STAGE = "hardening"
   }
   stages {
-    /*stage('Warm up') {
+    stage('Warm up') {
       steps {
         checkout scm
 
-        container('jmeter') {
+        /*container('jmeter') {
           script {
             def status = executeJMeter ( 
               scriptName: "jmeter/${env.APP_NAME}_perfcheck.jmx",
@@ -51,9 +51,9 @@ pipeline {
         }
         
         echo "Waiting for a minute to not skew data in DT"
-        sleep(60)
+        sleep(60)*/
       }
-    }*/
+    }
 
     stage('Performance Check') {
       steps {
@@ -69,8 +69,8 @@ pipeline {
                 serverUrl: "${env.APP_NAME}.staging", 
                 serverPort: 80,
                 checkPath: '/health',
-                vuCount: 5,
-                loopCount: 500,
+                vuCount: 10,
+                loopCount: 1000,
                 LTN: "PerfCheck_${BUILD_NUMBER}",
                 funcValidation: false,
                 avgRtValidation: 4000
@@ -166,7 +166,40 @@ pipeline {
                }
            }
         }
-    }
+        stage('Send Notification to DT') {
+            steps {
+          
+                script {
+            
+                    def tagMatchRules = [[ meTypes: [[meType: 'SERVICE']],
+                                             tags : [[context: 'CONTEXTLESS', key: 'keptn_project', value: KEPTN_PROJECT],
+                                                      [context: 'CONTEXTLESS', key: 'keptn_service', value: KEPTN_SERVICE],
+                                                      [context: 'CONTEXTLESS', key: 'keptn_stage', value: KEPTN_STAGE]]
+                                        ]];
+                    // Push some Jenkins OOTB info to DT.
+                    def customProps = [ "Evaluation Result": "${env.evaluationResult}", "Evaluation Score": "${env.evaluationScore}", "Jenkins Build Tag": "${BUILD_TAG}", "Jenkins Build URL": "${BUILD_URL}" ];
+                    
+                    def notification = new pushDynatraceInfoEvent();
+                    notification.call(title: "Keptn Quality Gates Evaluation: ${env.evaluationResult}", source: 'Jenkins', description: 'Evaluated build score for this build.', tagRule: tagMatchRules, customProperties: customProps);
+                }
+            }
+        
+        } // end stage
+        stage('Evaluate Pipeline') {
+            steps {
+          
+                script {
+                    //if The Keptn result is "Fail", fail the build.
+                    echo env.evaluationResult
+                    if (env.evaluationResult == "fail") {
+                        echo "[pipeline] FAILING PIPELINE Because Keptn Failed the Build";
+                        currentBuild.currentResult = 'FAILURE';
+                        error('Failing pipeline because keptn failed the build...');
+                    }
+                }
+            }
+        }// end stage
+    }// end stages
 } // end pipeline
 def get_timestamp(){
     DATE_TAG = java.time.LocalDate.now()
