@@ -25,7 +25,7 @@ pipeline {
     KEPTN_STAGE = "hardening"
   }
   stages {
-    stage('Warm up') {
+    /*stage('Warm up') {
       steps {
         checkout scm
 
@@ -53,7 +53,7 @@ pipeline {
         echo "Waiting for a minute to not skew data in DT"
         sleep(60)
       }
-    }
+    }*/
 
     stage('Performance Check') {
       steps {
