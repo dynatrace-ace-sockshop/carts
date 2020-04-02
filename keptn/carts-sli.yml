@@ -1,0 +1,11 @@
+---
+spec_version: '1.0'
+indicators:
+  throughput:          "builtin:service.requestCount.total:merge(0):sum?scope=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening)),tag(keptn_service:$SERVICE)"
+  error_rate:          "builtin:service.errors.total.count:merge(0):avg?scope=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening),tag(keptn_service:$SERVICE)"
+  response_time_p50:   "builtin:service.response.time:merge(0):percentile(50)?scope=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening),tag(keptn_service:$SERVICE)"
+  response_time_p90:   "builtin:service.response.time:merge(0):percentile(90)?scope=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening),tag(keptn_service:$SERVICE)"
+  response_time_p95:   "builtin:service.response.time:merge(0):percentile(95)?scope=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening),tag(keptn_service:$SERVICE)"
+  rt_addToCart:        "metricSelector=calc:service.itemscontroller.sockshop_qg:filter(eq(url,addToCart)):merge(0):percentile(95)&entitySelector=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening),tag(keptn_service:$SERVICE),type(SERVICE)"
+  pg_heap_suspension:  "metricSelector=builtin:tech.jvm.memory.gc.suspensionTime:merge(0):max&entitySelector=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening),tag(keptn_service:$SERVICE),type(PROCESS_GROUP_INSTANCE)"
+  pg_cpu_usage:        "metricSelector=builtin:tech.generic.cpu.usage:merge(0):max&entitySelector=tag(keptn_project:$PROJECT),tag(keptn_stage:hardening),tag(keptn_service:$SERVICE),type(PROCESS_GROUP_INSTANCE)"

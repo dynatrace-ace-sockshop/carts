@@ -15,9 +15,54 @@ pipeline {
     JMETER_LOOPCOUNT = 4000
   }
   stages {
+    stage('Update SLI/SLO') {
+      steps{
+        checkout scm
+
+        script {
+          def sli = readFile("keptn/${env.KEPTN_SERVICE}-sli.yml")
+          def slo = readFile("keptn/${env.KEPTN_SERVICE}-slo.yml")
+          echo sli
+          echo slo
+          String sli_encoded = sli.bytes.encodeBase64().toString()
+          String slo_encoded = slo.bytes.encodeBase64().toString()
+          echo sli_encoded
+          echo slo_encoded
+
+          def slo_json = """
+                {
+                  "resources" : [
+                    {
+                      "resourceURI": "slo.yaml",
+                      "resourceContent": "${slo_encoded}"
+                    }
+                  ]
+                 
+                }"""
+
+          def slo_request = httpRequest contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'x-token', value: "${env.KEPTN_API_TOKEN}"]], httpMode: 'POST', requestBody: slo_json, responseHandle: 'STRING', url: "${env.KEPTN_URL}/v1/project/${env.KEPTN_PROJECT}/stage/${env.KEPTN_STAGE}/service/${env.KEPTN_SERVICE}/resource", validResponseCodes: "100:404"
+          echo slo_request.getContent()
+          def sli_json = """
+                {
+                  "resources" : [
+                    {
+                      "resourceURI": "dynatrace/sli.yaml",
+                      "resourceContent": "${sli_encoded}"
+                    }
+                  ]
+                 
+                }"""
+
+          def sli_request = httpRequest contentType: 'APPLICATION_JSON', customHeaders: [[maskValue: true, name: 'x-token', value: "${env.KEPTN_API_TOKEN}"]], httpMode: 'POST', requestBody: slo_json, responseHandle: 'STRING', url: "${env.KEPTN_URL}/v1/project/${env.KEPTN_PROJECT}/stage/${env.KEPTN_STAGE}/service/${env.KEPTN_SERVICE}/resource", validResponseCodes: "100:404"
+          echo sli_request.getContent()
+        }
+      }
+      
+    }
+
     stage('Warm up') {
       steps {
-        checkout scm
+        //checkout scm
 
         container('jmeter') {
           script {
