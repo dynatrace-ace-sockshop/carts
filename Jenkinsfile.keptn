@@ -96,7 +96,7 @@ pipeline {
         
         } // end stage
 
-    stage('Performance Check') {
+    stage('Run Performance Test') {
       steps {
         script {
             env.testStartTime = get_timestamp()
@@ -234,7 +234,7 @@ pipeline {
                }
            }
         }
-        stage('Send Notification to DT') {
+        stage('Send Evaluation Result to DT') {
             steps {
               container("curl") {
                 script {
