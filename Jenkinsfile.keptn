@@ -161,8 +161,6 @@ pipeline {
             script {
                 println  "About to execute keptn evaluation"
                 //Get the start time of the test
-                //def startTime = get_timestamp()
-                //def endTime = get_timestamp()
                 
                 //Define the Keptn Json payload for the evaluation request post
                 def keptn_json = """
@@ -189,12 +187,11 @@ pipeline {
                 
                 //Parse response String 
                 con_response = new JsonSlurperClassic().parseText( kept_context_request.getContent() )
-
-                //con_response = new JsonSlurper().parseText( kept_context_request.getContent() )
+                
                 // Get the keptnContext Key
-                //keptn_context_key = con_response.get("keptnContext")
                 keptn_context_key = con_response.keptnContext;
                 env.keptn_context = keptn_context_key;
+
                 // URL Encode the context key
                 encoded_context = URLEncoder.encode(keptn_context_key.toString().trim(), "UTF-8")
                 
@@ -245,12 +242,13 @@ pipeline {
                                                       [context: 'CONTEXTLESS', key: 'keptn_stage', value: KEPTN_STAGE]]
                                         ]];
                     // Push some Jenkins OOTB info to DT.
+                    env.bridge_evalUrl = "${env.KEPTN_BRIDGE}/project/${env.KEPTN_PROJECT}/${env.KEPTN_SERVICE}/${env.keptn_context}/${env.keptn_evaluationContext}"
                     def customProps = [ 
                         "Evaluation Result": "${env.evaluationResult}", 
                         "Evaluation Score": "${env.evaluationScore}", 
                         "Jenkins Build Tag": "${BUILD_TAG}", 
                         "Jenkins Build URL": "${BUILD_URL}",
-                        "Evaluation Details": "${env.KEPTN_BRIDGE}/project/${env.KEPTN_PROJECT}/${env.KEPTN_SERVICE}/${env.keptn_context}/${env.keptn_evaluationContext}"
+                        "Evaluation Details": "${env.bridge_evalUrl}"
                     ];
                     
                     def notification = new pushDynatraceInfoEvent();
@@ -268,6 +266,7 @@ pipeline {
                     echo env.evaluationResult
                     if (env.evaluationResult == "fail") {
                         echo "[pipeline] FAILING PIPELINE Because Keptn Failed the Build";
+                        echo "Check the Keptn Bridge for more details: ${env.bridge_evalUrl}"
                         //currentBuild.currentResult = 'FAILURE';
                         error('Failing pipeline because keptn failed the build...');
                     }
