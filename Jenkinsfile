@@ -330,8 +330,7 @@ pipeline {
             string(name: 'TAG_STAGING', value: "${env.TAG_STAGING}"),
             string(name: 'VERSION', value: "${env.VERSION}"),
             string(name: 'DT_CUSTOM_PROP', value: "${env.DT_META}"),
-            boolean(name: 'EVAL_PS', value: false),
-            boolean(name: 'EVAL_KEPTN_QG', value: true)
+            choice(name: 'QUALITYGATE_PROVIDER', value: "Keptn Quality Gates")
           ]
       }
     }
