@@ -24,11 +24,11 @@ spec:
           value: "DT_CUSTOM_PROP_PLACEHOLDER"
         resources:
           limits:
-            cpu: 500m
-            memory: 1024Mi
+            cpu: 1000m
+            memory: 2048Mi
           requests:
-            cpu: 400m
-            memory: 768Mi
+            cpu: 700m
+            memory: 1024Mi
         ports:
         - containerPort: 8080
         volumeMounts:
