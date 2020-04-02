@@ -24,7 +24,7 @@ spec:
           value: "DT_CUSTOM_PROP_PLACEHOLDER"
         resources:
           limits:
-            cpu: 1000m
+            cpu: 900m
             memory: 2048Mi
           requests:
             cpu: 700m
