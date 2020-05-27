@@ -217,7 +217,7 @@ pipeline {
         }
       }
     }
-    stage('DT create synthetic monitor') {
+    /*stage('DT create synthetic monitor') {
       when {
           expression {
           return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
@@ -302,7 +302,7 @@ pipeline {
           }
         }
      }
-   }
+   }*/
     stage('Mark artifact for staging namespace') {
       when {
         expression {
