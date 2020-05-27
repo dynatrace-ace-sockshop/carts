@@ -217,7 +217,7 @@ pipeline {
         }
       }
     }
-    /*stage('DT create synthetic monitor') {
+    stage('DT create synthetic monitor') {
       when {
           expression {
           return env.BRANCH_NAME ==~ 'release/.*' || env.BRANCH_NAME ==~'master'
@@ -230,7 +230,7 @@ pipeline {
             env.SERVICE_IP = sh(script: 'kubectl get svc ${APP_NAME} -n dev -o \'jsonpath={..status.loadBalancer.ingress..ip}\'', , returnStdout: true).trim()
           }
         }
-        container("curl") {
+        /*container("curl") {
           script {
             def status = dt_createUpdateSyntheticTest (
               testName : "sockshop.dev.${env.APP_NAME}",
@@ -239,7 +239,7 @@ pipeline {
               location : "${env.DT_SYNTHETIC_LOCATION_ID}"
             )
           }
-        }
+        }*/
       }
     }
     stage('DT create application detection rule') {
@@ -302,7 +302,7 @@ pipeline {
           }
         }
      }
-   }*/
+   }
     stage('Mark artifact for staging namespace') {
       when {
         expression {
